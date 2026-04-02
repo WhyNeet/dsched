@@ -1,0 +1,4 @@
+config.local.*
+target
+.DS_Store
+.env

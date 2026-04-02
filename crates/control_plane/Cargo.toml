@@ -1,0 +1,16 @@
+[package]
+name = "control_plane"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+async-trait = "0.1.89"
+axum = { version = "0.8.8", features = ["macros"] }
+chrono = { version = "0.4.44", features = ["serde"] }
+config = { version = "0.15.22", features = ["toml"] }
+serde = "1.0.228"
+sqlx = { version = "0.8.6", features = ["chrono", "postgres", "runtime-tokio"] }
+tokio = { version = "1.50.0", features = ["rt-multi-thread", "macros"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
