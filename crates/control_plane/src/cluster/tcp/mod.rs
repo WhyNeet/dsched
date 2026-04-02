@@ -1,16 +1,12 @@
 use std::{net::SocketAddr, sync::Arc};
 
+use cluster_proto::message::ArchivedClusterMessage;
 use futures_util::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_util::codec::{Framed, LinesCodec};
 
-use crate::{
-    cluster::tcp::{message::ArchivedClusterMessage, session::ClusterSession},
-    config::Config,
-    storage::driver::Driver,
-};
+use crate::{cluster::tcp::session::ClusterSession, config::Config, storage::driver::Driver};
 
-mod message;
 mod session;
 
 pub async fn run(config: Arc<Config>, driver: Arc<dyn Driver>) -> anyhow::Result<()> {
@@ -51,7 +47,7 @@ async fn handle_connection(stream: TcpStream, addr: SocketAddr, driver: Arc<dyn 
               match session.close().await {
                 Ok(_) => {},
                 Err(e) => tracing::error!("failed to close session: {e}")
-                }
+              }
               break
             }
           }

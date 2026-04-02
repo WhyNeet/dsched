@@ -236,6 +236,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "cluster_proto"
+version = "0.1.0"
+dependencies = [
+ "rkyv",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -298,6 +305,7 @@ dependencies = [
  "async-trait",
  "axum",
  "chrono",
+ "cluster_proto",
  "config",
  "dashmap",
  "flume 0.12.0",

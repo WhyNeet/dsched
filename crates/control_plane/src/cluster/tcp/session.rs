@@ -1,6 +1,8 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use crate::{cluster::tcp::message::ArchivedClusterMessage, storage::driver::Driver};
+use cluster_proto::message::ArchivedClusterMessage;
+
+use crate::storage::driver::Driver;
 
 #[derive(Debug, Default)]
 pub enum ClusterSessionState {
