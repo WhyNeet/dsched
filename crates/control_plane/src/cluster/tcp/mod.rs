@@ -1,9 +1,9 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use cluster_proto::message::ArchivedClusterMessage;
+use cluster_proto::message::ClusterMessage;
 use futures_util::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
-use tokio_util::codec::{Framed, LinesCodec};
+use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
 use crate::{cluster::tcp::session::ClusterSession, config::Config, storage::driver::Driver};
 
@@ -22,7 +22,7 @@ pub async fn run(config: Arc<Config>, driver: Arc<dyn Driver>) -> anyhow::Result
 }
 
 async fn handle_connection(stream: TcpStream, addr: SocketAddr, driver: Arc<dyn Driver>) {
-    let mut lines = Framed::new(stream, LinesCodec::new());
+    let mut bytes = Framed::new(stream, LengthDelimitedCodec::new());
 
     let mut session = ClusterSession::new(driver, addr);
 
@@ -30,10 +30,10 @@ async fn handle_connection(stream: TcpStream, addr: SocketAddr, driver: Arc<dyn 
 
     loop {
         tokio::select! {
-          result = lines.next() => match result {
+          result = bytes.next() => match result {
             Some(Ok(msg)) => {
-              match rkyv::access::<ArchivedClusterMessage, rkyv::rancor::Error>(msg.as_bytes()) {
-                Ok(msg) => match session.handle_message(msg).await {
+              match rkyv::from_bytes::<ClusterMessage, rkyv::rancor::Error>(&msg) {
+                Ok(msg) => match session.handle_message(&msg).await {
                   Ok(_) => {},
                   Err(e) => tracing::error!("error handling message: {e}")
                 },

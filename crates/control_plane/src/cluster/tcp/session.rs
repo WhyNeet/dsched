@@ -1,6 +1,6 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use cluster_proto::message::ArchivedClusterMessage;
+use cluster_proto::message::ClusterMessage;
 
 use crate::storage::driver::Driver;
 
@@ -29,14 +29,12 @@ impl ClusterSession {
         }
     }
 
-    pub async fn handle_message(&mut self, msg: &ArchivedClusterMessage) -> anyhow::Result<()> {
+    pub async fn handle_message(&mut self, msg: &ClusterMessage) -> anyhow::Result<()> {
         match (&self.state, msg) {
-            (
-                ClusterSessionState::WaitingForAuthentication,
-                ArchivedClusterMessage::ClusterKey(key),
-            ) => {
+            (ClusterSessionState::WaitingForAuthentication, ClusterMessage::ClusterKey(key)) => {
                 let key = key.to_string();
                 self.state = ClusterSessionState::Ready { key: key.clone() };
+                tracing::info!("authenticating cluster `{key}`");
                 self.driver
                     .update_cluster(
                         key,

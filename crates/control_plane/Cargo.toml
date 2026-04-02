@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+cluster_proto = { path = "../cluster_proto" }
+shared = { path = "../shared" }
+
 anyhow = "1.0.102"
 async-trait = "0.1.89"
 axum = { version = "0.8.8", features = ["macros"] }
@@ -18,6 +21,3 @@ sqlx = { version = "0.8.6", features = ["chrono", "postgres", "runtime-tokio"] }
 tokio = { version = "1.50.0", features = ["rt-multi-thread", "macros"] }
 tokio-util = { version = "0.7.18", features = ["codec"] }
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
-
-cluster_proto = { path = "../cluster_proto" }

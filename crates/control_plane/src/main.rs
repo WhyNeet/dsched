@@ -10,7 +10,7 @@ use tokio::task::JoinSet;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    control_plane::tracing::init();
+    shared::tracing::init();
 
     tracing::info!("starting control plane");
 
