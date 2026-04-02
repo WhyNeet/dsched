@@ -72,6 +72,23 @@ impl Driver for PostgresDriver {
         .await?;
         Ok(())
     }
+
+    async fn update_cluster(
+        &self,
+        key: String,
+        status: ClusterStatus,
+        address: std::net::SocketAddr,
+    ) -> anyhow::Result<()> {
+        sqlx::query!(
+            r#"UPDATE clusters SET status = $2::cluster_status, address = $3 WHERE key = $1"#,
+            key,
+            status as ClusterStatus,
+            address.ip().to_string()
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
 }
 
 impl PostgresDriver {

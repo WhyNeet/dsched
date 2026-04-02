@@ -11,10 +11,8 @@ mod error;
 mod handlers;
 mod state;
 
-pub async fn run(config: Arc<Config>, driver: impl Driver + 'static) -> anyhow::Result<()> {
-    let state = AppState {
-        driver: Arc::new(driver),
-    };
+pub async fn run(config: Arc<Config>, driver: Arc<dyn Driver>) -> anyhow::Result<()> {
+    let state = AppState { driver };
 
     let app = Router::new().merge(handlers::router()).with_state(state);
 

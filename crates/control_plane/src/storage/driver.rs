@@ -9,4 +9,10 @@ pub trait Driver: Send + Sync {
     async fn get_cluster(&self, key: String) -> anyhow::Result<Option<Cluster>>;
     async fn set_cluster_status(&self, key: String, status: ClusterStatus) -> anyhow::Result<()>;
     async fn set_cluster_address(&self, key: String, address: SocketAddr) -> anyhow::Result<()>;
+    async fn update_cluster(
+        &self,
+        key: String,
+        status: ClusterStatus,
+        address: SocketAddr,
+    ) -> anyhow::Result<()>;
 }
