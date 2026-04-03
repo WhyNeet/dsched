@@ -1,0 +1,9 @@
+config.local.*
+target
+.DS_Store
+.env
+Dockerfile
+.dockerignore
+.gitignore
+docker-compose.yaml
+infra
