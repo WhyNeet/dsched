@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE clusters SET status = $2::cluster_status WHERE key = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        {
+          "Custom": {
+            "name": "cluster_status",
+            "kind": {
+              "Enum": [
+                "disconnected",
+                "connected"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7ffd3df6e01ebbfdf3ae3efe4edf3e20b13891112cf7e31d541ad7ae6afe748e"
+}

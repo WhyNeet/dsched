@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE clusters SET status = $2::cluster_status, address = $3 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "cluster_status",
+            "kind": {
+              "Enum": [
+                "disconnected",
+                "connected"
+              ]
+            }
+          }
+        },
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "23ae4bc745753854519364634eafb839e9d748011d8d2cab6aa93cbcfd810667"
+}
