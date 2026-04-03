@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use axum::Router;
+use tokio_util::sync::CancellationToken;
 
 use crate::config::Config;
 use crate::http::state::AppState;
@@ -11,7 +12,11 @@ mod error;
 mod handlers;
 mod state;
 
-pub async fn run(config: Arc<Config>, driver: Arc<dyn Driver>) -> anyhow::Result<()> {
+pub async fn run(
+    config: Arc<Config>,
+    driver: Arc<dyn Driver>,
+    shutdown: CancellationToken,
+) -> anyhow::Result<()> {
     let state = AppState { driver };
 
     let app = Router::new().merge(handlers::router()).with_state(state);
@@ -23,6 +28,7 @@ pub async fn run(config: Arc<Config>, driver: Arc<dyn Driver>) -> anyhow::Result
     tracing::info!("listening on port {}", config.http_port);
 
     axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown.cancelled_owned())
         .await
         .context("failed to start server")
 }

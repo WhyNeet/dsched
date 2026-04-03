@@ -1,26 +1,27 @@
-use std::net::SocketAddr;
-
-use chrono::{DateTime, Utc};
+use cluster_proto::message::ClusterMessage;
+use uuid::Uuid;
 
 pub mod registry;
 pub mod tcp;
 
 #[derive(Debug, Clone)]
 pub struct ClusterHandle {
+    pub id: Uuid,
     pub key: String,
-    pub state: ClusterState,
     pub sender: flume::Sender<ClusterMessage>,
 }
 
-#[derive(Debug, Clone)]
-pub enum ClusterState {
-    Connected {
-        address: SocketAddr,
-        connected_at: DateTime<Utc>,
-    },
-    Disconnected {
-        last_seen: Option<DateTime<Utc>>,
-    },
-}
+impl ClusterHandle {
+    pub fn new(id: Uuid, key: String) -> (ClusterHandle, flume::Receiver<ClusterMessage>) {
+        let (tx, rx) = flume::unbounded();
 
-pub enum ClusterMessage {}
+        (
+            Self {
+                id,
+                key,
+                sender: tx,
+            },
+            rx,
+        )
+    }
+}

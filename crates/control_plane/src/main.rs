@@ -1,12 +1,13 @@
 use std::{process, sync::Arc};
 
 use control_plane::{
-    cluster,
+    cluster::{self, registry::ClusterRegistry},
     config::Config,
     http,
     storage::{self, driver::Driver},
 };
 use tokio::task::JoinSet;
+use tokio_util::sync::CancellationToken;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -25,16 +26,32 @@ async fn main() -> anyhow::Result<()> {
     });
 
     let driver: Arc<dyn Driver> = Arc::new(driver);
+    let registry = ClusterRegistry::default();
+
+    let shutdown = CancellationToken::new();
 
     let mut set = JoinSet::new();
 
-    set.spawn(http::run(Arc::clone(&config), Arc::clone(&driver)));
-    set.spawn(cluster::tcp::run(Arc::clone(&config), driver));
+    set.spawn(http::run(
+        Arc::clone(&config),
+        Arc::clone(&driver),
+        shutdown.clone(),
+    ));
+    set.spawn(cluster::tcp::run(Arc::clone(&config), driver, registry));
 
-    while let Some(result) = set.join_next().await {
-        match result {
-            Ok(_) => tracing::debug!("task exited"),
-            Err(e) => tracing::error!("task panicked: {e}"),
+    loop {
+        tokio::select! {
+          Some(result) = set.join_next() => {
+              match result {
+                  Ok(_) => tracing::debug!("task exited"),
+                  Err(e) => tracing::error!("task panicked: {e}"),
+              }
+          }
+          _ = tokio::signal::ctrl_c() => {
+            shutdown.cancel();
+            tracing::info!("initiating graceful shutdown");
+            break;
+          }
         }
     }
 

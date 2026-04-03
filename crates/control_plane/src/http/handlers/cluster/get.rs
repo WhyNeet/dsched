@@ -12,7 +12,7 @@ pub async fn handler(
     State(driver): State<Arc<dyn Driver>>,
     Path(key): Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    let cluster = driver.get_cluster(key).await?;
+    let clusters = driver.get_clusters_by_key(key).await?;
 
-    Ok(Json(cluster))
+    Ok(Json(clusters))
 }

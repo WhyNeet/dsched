@@ -1,6 +1,6 @@
 use std::{process, sync::Arc};
 
-use master::{config::Config, control_plane};
+use master::{config::Config, control_plane, identity, node};
 use tokio::task::JoinSet;
 use tokio_util::sync::CancellationToken;
 
@@ -9,6 +9,8 @@ async fn main() -> anyhow::Result<()> {
     shared::tracing::init();
 
     tracing::info!("starting control plane");
+
+    let id = identity::get().await?;
 
     let config = Arc::new(Config::from_env().unwrap_or_else(|e| {
         tracing::error!("{}", e);
@@ -19,7 +21,12 @@ async fn main() -> anyhow::Result<()> {
 
     let mut set = JoinSet::new();
 
-    set.spawn(control_plane::run(config, shutdown.clone()));
+    set.spawn(control_plane::run(
+        Arc::clone(&config),
+        id,
+        shutdown.clone(),
+    ));
+    set.spawn(node::run(config, shutdown.clone()));
 
     loop {
         tokio::select! {
@@ -29,6 +36,7 @@ async fn main() -> anyhow::Result<()> {
           },
           _ = tokio::signal::ctrl_c() => {
             shutdown.cancel();
+            tracing::info!("initiating graceful shutdown");
             break;
           }
         }

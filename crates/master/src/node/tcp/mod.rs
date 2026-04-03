@@ -1,51 +1,30 @@
 use std::{net::SocketAddr, sync::Arc};
 
 use cluster_proto::message::ClusterMessage;
-use futures_util::{SinkExt, StreamExt};
+use futures_util::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
-use tokio_util::{
-    bytes::Bytes,
-    codec::{Framed, LengthDelimitedCodec},
-};
+use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
-use crate::{
-    cluster::{registry::ClusterRegistry, tcp::session::ClusterSession},
-    config::Config,
-    storage::driver::Driver,
-};
+use crate::config::Config;
 
 mod session;
 
-pub async fn run(
-    config: Arc<Config>,
-    driver: Arc<dyn Driver>,
-    registry: ClusterRegistry,
-) -> anyhow::Result<()> {
+pub async fn run(config: Arc<Config>) -> anyhow::Result<()> {
     let listener = TcpListener::bind(("0.0.0.0", config.tcp_port)).await?;
 
     tracing::info!("listening on port {}", config.tcp_port);
 
     while let Ok((stream, addr)) = listener.accept().await {
-        tokio::spawn(handle_connection(
-            stream,
-            addr,
-            Arc::clone(&driver),
-            registry.clone(),
-        ));
+        tokio::spawn(handle_connection(stream, addr));
     }
 
     Ok(())
 }
 
-async fn handle_connection(
-    stream: TcpStream,
-    addr: SocketAddr,
-    driver: Arc<dyn Driver>,
-    registry: ClusterRegistry,
-) {
+async fn handle_connection(stream: TcpStream, addr: SocketAddr) {
     let mut bytes = Framed::new(stream, LengthDelimitedCodec::new());
 
-    let mut session = ClusterSession::new(driver, addr, registry);
+    let mut session = ClusterSession::new(driver, addr);
 
     tracing::debug!("created new session");
 
@@ -70,19 +49,6 @@ async fn handle_connection(
                 Err(e) => tracing::error!("failed to close session: {e}")
               }
               break
-            }
-          },
-          Ok(msg) = async {
-            match &session.receiver {
-              Some(rx) => rx.recv_async().await,
-              None => std::future::pending().await
-            }
-          } => {
-            let message = rkyv::to_bytes::<rkyv::rancor::Error>(&msg).unwrap();
-            let message = message.to_vec();
-            match bytes.send(Bytes::from(message)).await {
-              Err(e) => tracing::debug!("failed to send message to cluster: {e}"),
-              _ => ()
             }
           }
         }
