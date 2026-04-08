@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: master-node
+spec:
+  serviceName: master-node-svc
+  replicas: 3
+  selector:
+    matchLabels:
+      app: master-node
+  template:
+    metadata:
+      labels:
+        app: master-node
+    spec:
+      containers:
+      - name: master-node
+        image: wneet/dsched-master:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: node-data
+          mountPath: /var/lib/dsched
+        env:
+        - name: APP_CONTROL_PLANE_URL
+          value: control-plane-svc.default.svc.cluster.local:8081
+        - name: APP_CLUSTER_KEY
+          value: example
+      securityContext:
+        fsGroup: 2000
+  volumeClaimTemplates: # This automatically creates a separate PVC for every replica
+  - metadata:
+      name: node-data
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 64Mi

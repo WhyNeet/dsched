@@ -8,7 +8,7 @@ use tokio_util::sync::CancellationToken;
 async fn main() -> anyhow::Result<()> {
     shared::tracing::init();
 
-    tracing::info!("starting control plane");
+    tracing::info!("starting master node");
 
     let id = identity::get().await?;
 

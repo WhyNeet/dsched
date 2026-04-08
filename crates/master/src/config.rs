@@ -18,7 +18,7 @@ impl Config {
             .add_source(
                 config::Environment::with_prefix("APP")
                     .try_parsing(true)
-                    .separator("_"),
+                    .convert_case(config::Case::Snake),
             )
             .build()?
             .try_deserialize()?)

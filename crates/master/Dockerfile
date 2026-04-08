@@ -1,5 +1,7 @@
 FROM rust:1.94.1-alpine AS chef
 RUN cargo install cargo-chef
+RUN cargo install sqlx-cli --no-default-features --features rustls,postgres --version 0.8.6
+
 WORKDIR /app
 
 # Analyze full workspace
@@ -17,6 +19,7 @@ FROM chef AS builder
 COPY . .
 COPY --from=cacher /app/target target
 
+ENV SQLX_OFFLINE=true
 RUN cargo build --release -p master --bin master
 
 FROM alpine:latest AS runtime
@@ -24,4 +27,7 @@ FROM alpine:latest AS runtime
 WORKDIR /app
 COPY --from=builder /app/target/release/master .
 
+
+ENV APP_TCP_PORT=8080
+EXPOSE 8080
 ENTRYPOINT [ "./master" ]
