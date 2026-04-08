@@ -6,7 +6,7 @@ use control_plane::{
     http,
     storage::{self, driver::Driver},
 };
-use tokio::task::JoinSet;
+use tokio::{signal::unix::SignalKind, task::JoinSet};
 use tokio_util::sync::CancellationToken;
 
 #[tokio::main]
@@ -39,6 +39,8 @@ async fn main() -> anyhow::Result<()> {
     ));
     set.spawn(cluster::tcp::run(Arc::clone(&config), driver, registry));
 
+    let mut sigterm = tokio::signal::unix::signal(SignalKind::terminate()).unwrap();
+
     loop {
         tokio::select! {
           Some(result) = set.join_next() => {
@@ -48,6 +50,11 @@ async fn main() -> anyhow::Result<()> {
               }
           }
           _ = tokio::signal::ctrl_c() => {
+            shutdown.cancel();
+            tracing::info!("initiating graceful shutdown");
+            break;
+          }
+          _ = sigterm.recv() => {
             shutdown.cancel();
             tracing::info!("initiating graceful shutdown");
             break;

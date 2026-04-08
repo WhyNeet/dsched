@@ -1,7 +1,7 @@
 use std::{process, sync::Arc};
 
 use master::{config::Config, control_plane, identity, node};
-use tokio::task::JoinSet;
+use tokio::{signal::unix::SignalKind, task::JoinSet};
 use tokio_util::sync::CancellationToken;
 
 #[tokio::main]
@@ -28,6 +28,8 @@ async fn main() -> anyhow::Result<()> {
     ));
     set.spawn(node::run(config, shutdown.clone()));
 
+    let mut sigterm = tokio::signal::unix::signal(SignalKind::terminate()).unwrap();
+
     loop {
         tokio::select! {
           Some(result) = set.join_next() => match result {
@@ -35,6 +37,11 @@ async fn main() -> anyhow::Result<()> {
               Err(e) => tracing::error!("task panicked: {e}"),
           },
           _ = tokio::signal::ctrl_c() => {
+            shutdown.cancel();
+            tracing::info!("initiating graceful shutdown");
+            break;
+          }
+          _ = sigterm.recv() => {
             shutdown.cancel();
             tracing::info!("initiating graceful shutdown");
             break;
