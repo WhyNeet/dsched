@@ -37,7 +37,12 @@ async fn main() -> anyhow::Result<()> {
         Arc::clone(&driver),
         shutdown.clone(),
     ));
-    set.spawn(cluster::tcp::run(Arc::clone(&config), driver, registry));
+    set.spawn(cluster::tcp::run(
+        Arc::clone(&config),
+        driver,
+        registry,
+        shutdown.clone(),
+    ));
 
     let mut sigterm = tokio::signal::unix::signal(SignalKind::terminate()).unwrap();
 

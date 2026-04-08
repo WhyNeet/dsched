@@ -1116,6 +1116,7 @@ dependencies = [
  "cluster_proto",
  "config",
  "futures-util",
+ "node_proto",
  "rkyv",
  "serde",
  "shared",
@@ -2281,6 +2282,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-sink",
+ "futures-util",
  "pin-project-lite",
  "tokio",
 ]

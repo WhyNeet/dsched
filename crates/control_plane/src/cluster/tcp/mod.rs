@@ -6,6 +6,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_util::{
     bytes::Bytes,
     codec::{Framed, LengthDelimitedCodec},
+    sync::CancellationToken,
 };
 
 use crate::{
@@ -20,6 +21,7 @@ pub async fn run(
     config: Arc<Config>,
     driver: Arc<dyn Driver>,
     registry: ClusterRegistry,
+    shutdown: CancellationToken,
 ) -> anyhow::Result<()> {
     let listener = TcpListener::bind(("0.0.0.0", config.tcp_port)).await?;
 
@@ -31,6 +33,7 @@ pub async fn run(
             addr,
             Arc::clone(&driver),
             registry.clone(),
+            shutdown.clone(),
         ));
     }
 
@@ -42,6 +45,7 @@ async fn handle_connection(
     addr: SocketAddr,
     driver: Arc<dyn Driver>,
     registry: ClusterRegistry,
+    shutdown: CancellationToken,
 ) {
     let mut bytes = Framed::new(stream, LengthDelimitedCodec::new());
 
@@ -51,6 +55,9 @@ async fn handle_connection(
 
     loop {
         tokio::select! {
+          _ = shutdown.cancelled() => {
+            break
+          }
           result = bytes.next() => match result {
             Some(Ok(msg)) => {
               match rkyv::from_bytes::<ClusterMessage, rkyv::rancor::Error>(&msg) {
@@ -65,10 +72,6 @@ async fn handle_connection(
               tracing::error!("{e}");
             },
             None => {
-              match session.close().await {
-                Ok(_) => {},
-                Err(e) => tracing::error!("failed to close session: {e}")
-              }
               break
             }
           },
@@ -86,6 +89,11 @@ async fn handle_connection(
             }
           }
         }
+    }
+
+    match session.close().await {
+        Ok(_) => {}
+        Err(e) => tracing::error!("failed to close session: {e}"),
     }
 
     tracing::debug!("closed session");

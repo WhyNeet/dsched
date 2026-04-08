@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
         id,
         shutdown.clone(),
     ));
-    set.spawn(node::run(config, shutdown.clone()));
+    set.spawn(node::tcp::run(config, shutdown.clone()));
 
     let mut sigterm = tokio::signal::unix::signal(SignalKind::terminate()).unwrap();
 

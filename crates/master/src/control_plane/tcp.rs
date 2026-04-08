@@ -46,7 +46,6 @@ pub async fn maintain_connection(
             }
           }
           _ = shutdown.cancelled() => {
-            tracing::info!("shutting down control plane connection");
             break
           }
         }
