@@ -20,14 +20,14 @@ COPY . .
 COPY --from=cacher /app/target target
 
 ENV SQLX_OFFLINE=true
-RUN cargo build --release -p control_plane --bin control_plane
+RUN cargo build --release -p control-plane --bin control-plane
 
 FROM alpine:latest AS runtime
 
 WORKDIR /app
-COPY --from=builder /app/target/release/control_plane .
+COPY --from=builder /app/target/release/control-plane .
 
 
 ENV APP_HTTP_PORT=8080 APP_TCP_PORT=8081
 EXPOSE 8080 8081
-ENTRYPOINT [ "./control_plane" ]
+ENTRYPOINT [ "./control-plane" ]

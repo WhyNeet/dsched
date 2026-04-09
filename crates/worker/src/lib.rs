@@ -33,8 +33,6 @@ impl Worker {
     }
 
     pub async fn run(self) -> anyhow::Result<()> {
-        shared::tracing::init();
-
         tracing::info!("starting worker node");
 
         let node_id = Uuid::new_v4();

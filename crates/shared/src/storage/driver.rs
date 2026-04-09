@@ -7,6 +7,8 @@ pub trait Driver: Send + Sync {
     async fn insert_node(&self, node: Node) -> anyhow::Result<()>;
     async fn remove_node(&self, id: Uuid) -> anyhow::Result<()>;
     async fn tick_last_seen(&self, id: Uuid) -> anyhow::Result<()>;
+    async fn count_nodes_by_cluster_key(&self, cluster_key: &str) -> anyhow::Result<i64>;
+    async fn list_distinct_cluster_keys(&self) -> anyhow::Result<Vec<String>>;
 
     async fn insert_job(&self, job: Job) -> anyhow::Result<()>;
     async fn get_pending_jobs(&self, batch_size: u32) -> anyhow::Result<Vec<Job>>;

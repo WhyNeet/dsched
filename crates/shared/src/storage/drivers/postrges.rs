@@ -46,6 +46,26 @@ impl Driver for PostgresDriver {
         Ok(())
     }
 
+    async fn count_nodes_by_cluster_key(&self, cluster_key: &str) -> anyhow::Result<i64> {
+        let count: i64 = sqlx::query_scalar!(
+            "SELECT COUNT(*) FROM nodes WHERE cluster_key = $1",
+            cluster_key
+        )
+        .fetch_one(&self.pool)
+        .await?
+        .unwrap();
+
+        Ok(count)
+    }
+
+    async fn list_distinct_cluster_keys(&self) -> anyhow::Result<Vec<String>> {
+        let keys: Vec<String> = sqlx::query_scalar!("SELECT DISTINCT cluster_key FROM nodes")
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(keys)
+    }
+
     async fn insert_job(&self, job: crate::storage::model::job::Job) -> anyhow::Result<()> {
         sqlx::query!(
             r#"INSERT INTO jobs (id, "type", payload, run_at, status) VALUES ($1, $2, $3, $4, $5)"#,

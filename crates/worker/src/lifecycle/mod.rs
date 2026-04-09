@@ -17,7 +17,7 @@ pub async fn run(
         cluster_key: config.cluster_key.clone(),
         last_seen: Utc::now(),
     };
-    tracing::debug!("starting lifecycle");
+    tracing::info!("starting lifecycle");
     driver.insert_node(node).await?;
 
     let mut interval = tokio::time::interval(Duration::from_secs(10));
@@ -35,7 +35,7 @@ pub async fn run(
         }
     }
 
-    tracing::debug!("shutting down");
+    tracing::info!("shutting down");
 
     driver.remove_node(id).await?;
 
