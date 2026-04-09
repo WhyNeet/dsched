@@ -302,7 +302,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "control_plane"
+name = "control-plane"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -529,6 +529,19 @@ dependencies = [
  "concurrent-queue",
  "parking",
  "pin-project-lite",
+]
+
+[[package]]
+name = "example-basic-worker"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "worker",
 ]
 
 [[package]]
