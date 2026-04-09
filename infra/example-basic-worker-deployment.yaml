@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-basic-worker-deployment
+  labels:
+    app: example-basic-worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: example-basic-worker
+  template:
+    metadata:
+      labels:
+        app: example-basic-worker
+    spec:
+      containers:
+      - name: example-basic-worker
+        image: wneet/dsched-basic-worker:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: DATABASE_URL
+          value: postgres://admin:admin@postgres-svc.default.svc.cluster.local:5432/postgres
