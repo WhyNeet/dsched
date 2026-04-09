@@ -1,0 +1,16 @@
+[package]
+name = "worker"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+shared = { path = "../shared" }
+
+anyhow = "1.0.102"
+tracing = "0.1.44"
+tokio = { version = "1.50.0", features = ["rt-multi-thread", "macros", "net"] }
+sqlx = { version = "0.8.6", features = ["chrono", "postgres", "runtime-tokio", "tls-rustls", "uuid"] }
+tokio-util = { version = "0.7.18", features = ["rt"] }
+serde_json = "1.0.149"
+async-trait = "0.1.89"
+flume = "0.12.0"

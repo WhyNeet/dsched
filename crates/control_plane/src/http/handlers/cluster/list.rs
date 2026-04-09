@@ -7,7 +7,8 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{http::error::AppError, storage::driver::Driver};
+use crate::http::error::AppError;
+use shared::storage::driver::Driver;
 
 #[derive(Deserialize)]
 pub struct ListClustersQuery {

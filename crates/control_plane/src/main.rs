@@ -1,11 +1,11 @@
 use std::{process, sync::Arc};
 
 use control_plane::{
-    cluster::{self, registry::ClusterRegistry},
     config::Config,
     http,
-    storage::{self, driver::Driver},
+    storage::{self},
 };
+use shared::storage::driver::Driver;
 use tokio::{signal::unix::SignalKind, task::JoinSet};
 use tokio_util::sync::CancellationToken;
 
@@ -26,23 +26,12 @@ async fn main() -> anyhow::Result<()> {
     });
 
     let driver: Arc<dyn Driver> = Arc::new(driver);
-    let registry = ClusterRegistry::default();
 
     let shutdown = CancellationToken::new();
 
     let mut set = JoinSet::new();
 
-    set.spawn(http::run(
-        Arc::clone(&config),
-        Arc::clone(&driver),
-        shutdown.clone(),
-    ));
-    set.spawn(cluster::tcp::run(
-        Arc::clone(&config),
-        driver,
-        registry,
-        shutdown.clone(),
-    ));
+    set.spawn(http::run(Arc::clone(&config), driver, shutdown.clone()));
 
     let mut sigterm = tokio::signal::unix::signal(SignalKind::terminate()).unwrap();
 

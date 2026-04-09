@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS nodes (
+  id UUID NOT NULL,
+  cluster_key VARCHAR NOT NULL,
+  last_seen TIMESTAMPTZ NOT NULL
+);

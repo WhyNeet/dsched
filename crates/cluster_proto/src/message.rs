@@ -1,9 +1,0 @@
-use rkyv::{Archive, Deserialize, Serialize};
-use uuid::Uuid;
-
-#[derive(Archive, Deserialize, Serialize, Debug, PartialEq)]
-#[rkyv(compare(PartialEq), derive(Debug))]
-pub enum ClusterMessage {
-    ClusterAuth(Uuid, String),
-    Ping,
-}

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::extract::FromRef;
 
-use crate::storage::driver::Driver;
+use shared::storage::driver::Driver;
 
 #[derive(Clone, FromRef)]
 pub struct AppState {

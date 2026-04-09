@@ -6,7 +6,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::config::Config;
 use crate::http::state::AppState;
-use crate::storage::driver::Driver;
+use shared::storage::driver::Driver;
 
 mod error;
 mod handlers;

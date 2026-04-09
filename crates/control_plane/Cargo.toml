@@ -4,13 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-cluster_proto = { path = "../cluster_proto" }
 shared = { path = "../shared" }
 
 anyhow = "1.0.102"
-async-trait = "0.1.89"
 axum = { version = "0.8.8", features = ["macros"] }
-chrono = { version = "0.4.44", features = ["serde"] }
 config = { version = "0.15.22", features = ["toml"] }
 dashmap = "6.1.0"
 flume = "0.12.0"

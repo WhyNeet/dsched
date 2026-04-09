@@ -5,8 +5,9 @@ use axum::{
     extract::{Path, State},
     response::IntoResponse,
 };
+use shared::storage::driver::Driver;
 
-use crate::{http::error::AppError, storage::driver::Driver};
+use crate::http::error::AppError;
 
 pub async fn handler(
     State(driver): State<Arc<dyn Driver>>,
