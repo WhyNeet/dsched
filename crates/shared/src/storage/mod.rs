@@ -1,4 +1,4 @@
-use crate::storage::{driver::Driver, drivers::postrges::PostgresDriver};
+use crate::storage::{driver::Driver, drivers::postgres::PostgresDriver};
 
 pub mod driver;
 mod drivers;

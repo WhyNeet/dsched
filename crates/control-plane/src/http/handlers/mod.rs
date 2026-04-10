@@ -3,6 +3,7 @@ use axum::{Router, routing};
 use crate::http::state::AppState;
 
 mod cluster;
+mod job_definition;
 
 pub async fn root() -> &'static str {
     "Hello, World!"
@@ -11,5 +12,6 @@ pub async fn root() -> &'static str {
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", routing::get(root))
-        .nest("/cluster", cluster::router())
+        .nest("/clusters", cluster::router())
+        .nest("/job-definitions", job_definition::router())
 }

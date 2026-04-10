@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE job_definitions SET type = $2, payload = $3, schedule_type = $4, schedule = $5, max_retries = $6, next_run_at = $7, last_triggered_at = $8, is_enabled = $9 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Jsonb",
+        "Varchar",
+        "Varchar",
+        "Int4",
+        "Timestamptz",
+        "Timestamptz",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e7e29809c108a38ae3ee27bdb822e1b87dcb403ea138bac8e150c78afa7126b8"
+}

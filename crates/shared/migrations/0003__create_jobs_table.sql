@@ -1,0 +1,11 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id UUID PRIMARY KEY,
+  type VARCHAR NOT NULL,
+  payload JSONB NOT NULL,
+  status VARCHAR NOT NULL,
+  retries INTEGER NOT NULL,
+  job_definition_id UUID REFERENCES job_definitions(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL
+);
