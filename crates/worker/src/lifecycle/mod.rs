@@ -1,7 +1,8 @@
+use chrono::Utc;
 use shared::storage::{driver::Driver, model::node::Node};
-use sqlx::types::{Uuid, chrono::Utc};
 use std::{sync::Arc, time::Duration};
 use tokio_util::sync::CancellationToken;
+use uuid::Uuid;
 
 use crate::{config::Config, executor::Executor};
 

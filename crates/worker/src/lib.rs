@@ -4,12 +4,12 @@ mod lifecycle;
 mod storage;
 
 pub use executor::handler::JobHandler;
+use uuid::Uuid;
 
 use std::{collections::HashMap, sync::Arc};
 
 use config::Config;
 use shared::storage::driver::Driver;
-use sqlx::types::Uuid;
 use tokio::{signal::unix::SignalKind, task::JoinSet};
 use tokio_util::sync::CancellationToken;
 
