@@ -18,6 +18,11 @@ spec:
       - name: example-basic-worker
         image: wneet/dsched-basic-worker:latest
         imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "128Mi"
+          limits:
+            memory: "256Mi"
         env:
         - name: DATABASE_URL
           value: postgres://admin:admin@postgres-svc.default.svc.cluster.local:5432/postgres
