@@ -1,6 +1,10 @@
 use uuid::Uuid;
 
-use crate::storage::model::{job::Job, job_definition::JobDefinition, node::Node};
+use crate::storage::model::{
+    job::{Job, JobStatus},
+    job_definition::JobDefinition,
+    node::Node,
+};
 
 #[async_trait::async_trait]
 pub trait Driver: Send + Sync {
@@ -43,5 +47,6 @@ pub trait Driver: Send + Sync {
     ) -> anyhow::Result<Vec<JobDefinition>>;
 
     async fn insert_job(&self, job: Job) -> anyhow::Result<()>;
+    async fn update_job_status(&self, id: Uuid, status: JobStatus) -> anyhow::Result<()>;
     async fn get_pending_jobs(&self, batch_size: u32) -> anyhow::Result<Vec<Job>>;
 }

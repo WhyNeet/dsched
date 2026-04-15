@@ -22,6 +22,7 @@ pub async fn run(
     driver.insert_node(node).await?;
 
     let mut interval = tokio::time::interval(Duration::from_secs(10));
+    let job_completion_rx = executor.get_completion_rx();
 
     loop {
         tokio::select! {
@@ -32,6 +33,9 @@ pub async fn run(
             driver.tick_last_seen(id).await?;
             let jobs = driver.get_pending_jobs(executor.estimate_free_job_slots() as u32).await?;
             executor.submit_jobs(jobs);
+          }
+          Ok((id, status)) = job_completion_rx.recv_async() => {
+            driver.update_job_status(id, status).await?;
           }
         }
     }

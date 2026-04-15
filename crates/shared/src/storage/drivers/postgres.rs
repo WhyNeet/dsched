@@ -70,6 +70,16 @@ impl Driver for PostgresDriver {
         .await?;
         Ok(())
     }
+    async fn update_job_status(&self, id: Uuid, status: JobStatus) -> anyhow::Result<()> {
+        sqlx::query!(
+            r#"UPDATE jobs SET status = $2 WHERE id = $1"#,
+            id,
+            status as JobStatus
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
     async fn get_pending_jobs(
         &self,
         limit: u32,
