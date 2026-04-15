@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, \"type\", payload, schedule_type, schedule, max_retries, next_run_at, last_triggered_at, is_enabled, created_at FROM job_definitions ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT d.* FROM job_definitions d\n        WHERE d.is_enabled = true\n        AND d.next_run_at <= NOW()\n        AND NOT EXISTS (\n            SELECT 1 FROM jobs j\n            WHERE j.job_definition_id = d.id\n            AND j.status IN ('pending', 'running')\n            LIMIT $1\n        )\n        FOR UPDATE SKIP LOCKED;\n        ",
   "describe": {
     "columns": [
       {
@@ -56,7 +56,6 @@
     ],
     "parameters": {
       "Left": [
-        "Int8",
         "Int8"
       ]
     },
@@ -73,5 +72,5 @@
       false
     ]
   },
-  "hash": "189bea194019d23a9d62122ba22ce24df98cf3557793d7cab2e0a1025938d442"
+  "hash": "85456771fbb0aa2e38ea874c875850d4ccc7ac9c0dcf392e87bb2a7ba4a78182"
 }

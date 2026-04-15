@@ -2,7 +2,7 @@ use std::{process, sync::Arc};
 
 use control_plane::{
     config::Config,
-    http,
+    http, scheduler,
     storage::{self},
 };
 use shared::storage::driver::Driver;
@@ -31,7 +31,16 @@ async fn main() -> anyhow::Result<()> {
 
     let mut set = JoinSet::new();
 
-    set.spawn(http::run(Arc::clone(&config), driver, shutdown.clone()));
+    set.spawn(http::run(
+        Arc::clone(&config),
+        Arc::clone(&driver),
+        shutdown.clone(),
+    ));
+    set.spawn(scheduler::run(
+        Arc::clone(&config),
+        driver,
+        shutdown.clone(),
+    ));
 
     let mut sigterm = tokio::signal::unix::signal(SignalKind::terminate()).unwrap();
 

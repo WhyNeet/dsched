@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, \"type\", payload, status AS \"status: JobStatus\", retries, job_definition_id, created_at FROM jobs WHERE status = 'pending' LIMIT $1",
+  "query": "\n            UPDATE jobs\n            SET status = 'running'\n            WHERE id IN (\n              SELECT id FROM jobs\n              WHERE status = 'pending'\n              FOR UPDATE SKIP LOCKED\n              LIMIT $1\n            ) RETURNING id, \"type\", payload, status AS \"status: JobStatus\", retries, job_definition_id, created_at",
   "describe": {
     "columns": [
       {
@@ -54,5 +54,5 @@
       false
     ]
   },
-  "hash": "3707b3f39cab664fceebedd40368986e096af2abc0049668c9112ff62ff012ae"
+  "hash": "56592f7c98845cef83a342a5ea668debdd2aba81052d532bfb3b22f37680c728"
 }
