@@ -11,7 +11,7 @@ pub struct JobDefinition {
     pub schedule_type: String,
     pub schedule: Option<String>,
     pub max_retries: i32,
-    pub next_run_at: Option<DateTime<Utc>>,
+    pub next_run_at: DateTime<Utc>,
     pub last_triggered_at: Option<DateTime<Utc>>,
     pub is_enabled: bool,
     pub created_at: DateTime<Utc>,

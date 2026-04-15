@@ -24,13 +24,23 @@ pub trait Driver: Send + Sync {
         job_type: &str,
     ) -> anyhow::Result<Vec<JobDefinition>>;
     async fn get_enabled_job_definitions(&self) -> anyhow::Result<Vec<JobDefinition>>;
+    async fn update_job_definition_next_run_at(
+        &self,
+        id: Uuid,
+        next_run_at: Option<chrono::DateTime<chrono::Utc>>,
+    ) -> anyhow::Result<()>;
     async fn update_job_definition_schedule(
         &self,
         id: Uuid,
+        schedule_type: String,
         schedule: Option<String>,
-        next_run_at: Option<chrono::DateTime<chrono::Utc>>,
+        next_run_at: chrono::DateTime<chrono::Utc>,
     ) -> anyhow::Result<()>;
     async fn toggle_job_definition_enabled(&self, id: Uuid, enabled: bool) -> anyhow::Result<()>;
+    async fn get_unscheduled_job_definitions(
+        &self,
+        limit: u32,
+    ) -> anyhow::Result<Vec<JobDefinition>>;
 
     async fn insert_job(&self, job: Job) -> anyhow::Result<()>;
     async fn get_pending_jobs(&self, batch_size: u32) -> anyhow::Result<Vec<Job>>;

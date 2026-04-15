@@ -7,7 +7,6 @@ use crate::storage::{
     },
 };
 use anyhow::Context;
-use chrono::{DateTime, Utc};
 use serde_json::Value;
 use sqlx::{PgPool, postgres::PgPoolOptions, types::Json};
 use uuid::Uuid;
@@ -77,11 +76,20 @@ impl Driver for PostgresDriver {
     ) -> anyhow::Result<Vec<crate::storage::model::job::Job>> {
         let jobs = sqlx::query_as!(
             Job,
-            r#"SELECT id, "type", payload, status AS "status: JobStatus", retries, job_definition_id, created_at FROM jobs WHERE status = 'pending' LIMIT $1"#,
+            r#"
+            UPDATE jobs
+            SET status = 'running'
+            WHERE id IN (
+              SELECT id FROM jobs
+              WHERE status = 'pending'
+              FOR UPDATE SKIP LOCKED
+              LIMIT $1
+            ) RETURNING id, "type", payload, status AS "status: JobStatus", retries, job_definition_id, created_at"#,
             limit as i64
         )
         .fetch_all(&self.pool)
         .await?;
+
         Ok(jobs)
     }
     async fn create_job_definition(&self, definition: JobDefinition) -> anyhow::Result<()> {
@@ -119,22 +127,40 @@ impl Driver for PostgresDriver {
         .await?;
         Ok(())
     }
-    async fn update_job_definition_schedule(
+    async fn update_job_definition_next_run_at(
         &self,
         id: Uuid,
-        schedule: Option<String>,
-        next_run_at: Option<DateTime<Utc>>,
+        next_run_at: Option<chrono::DateTime<chrono::Utc>>,
     ) -> anyhow::Result<()> {
         sqlx::query!(
-            r#"UPDATE job_definitions SET schedule = $2, next_run_at = $3 WHERE id = $1"#,
+            r#"UPDATE job_definitions SET next_run_at = $2 WHERE id = $1"#,
             id,
-            schedule as Option<String>,
             next_run_at
         )
         .execute(&self.pool)
         .await?;
         Ok(())
     }
+
+    async fn update_job_definition_schedule(
+        &self,
+        id: Uuid,
+        schedule_type: String,
+        schedule: Option<String>,
+        next_run_at: chrono::DateTime<chrono::Utc>,
+    ) -> anyhow::Result<()> {
+        sqlx::query!(
+            r#"UPDATE job_definitions SET schedule_type = $2, schedule = $3, next_run_at = $4 WHERE id = $1"#,
+            id,
+            schedule_type,
+            schedule,
+            next_run_at
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     async fn toggle_job_definition_enabled(&self, id: Uuid, enabled: bool) -> anyhow::Result<()> {
         sqlx::query!(
             r#"UPDATE job_definitions SET is_enabled = $2 WHERE id = $1"#,
@@ -196,6 +222,32 @@ impl Driver for PostgresDriver {
         )
         .fetch_all(&self.pool)
         .await?;
+        Ok(definitions)
+    }
+
+    async fn get_unscheduled_job_definitions(
+        &self,
+        limit: u32,
+    ) -> anyhow::Result<Vec<JobDefinition>> {
+        let definitions = sqlx::query_as!(
+            JobDefinition,
+            r#"
+        SELECT d.* FROM job_definitions d
+        WHERE d.is_enabled = true
+        AND d.next_run_at <= NOW()
+        AND NOT EXISTS (
+            SELECT 1 FROM jobs j
+            WHERE j.job_definition_id = d.id
+            AND j.status IN ('pending', 'running')
+            LIMIT $1
+        )
+        FOR UPDATE SKIP LOCKED;
+        "#,
+            limit as i64
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
         Ok(definitions)
     }
 }

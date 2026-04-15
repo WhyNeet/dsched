@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS job_definitions (
   schedule_type VARCHAR NOT NULL,
   schedule VARCHAR,
   max_retries INTEGER NOT NULL,
-  next_run_at TIMESTAMPTZ,
+  next_run_at TIMESTAMPTZ NOT NULL,
   last_triggered_at TIMESTAMPTZ,
   is_enabled BOOLEAN NOT NULL,
   created_at TIMESTAMPTZ NOT NULL
