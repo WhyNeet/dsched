@@ -45,8 +45,21 @@ pub trait Driver: Send + Sync {
         &self,
         limit: u32,
     ) -> anyhow::Result<Vec<JobDefinition>>;
+    async fn get_unscheduled_job_definitions_start_txn(
+        &self,
+        limit: u32,
+    ) -> anyhow::Result<(Vec<JobDefinition>, Box<dyn Transaction>)>;
 
     async fn insert_job(&self, job: Job) -> anyhow::Result<()>;
     async fn update_job_status(&self, id: Uuid, status: JobStatus) -> anyhow::Result<()>;
     async fn get_pending_jobs(&self, batch_size: u32) -> anyhow::Result<Vec<Job>>;
+    async fn list_jobs(&self, limit: u32, offset: u32) -> anyhow::Result<Vec<Job>>;
+    async fn get_job(&self, id: Uuid) -> anyhow::Result<Option<Job>>;
+    async fn delete_job(&self, id: Uuid) -> anyhow::Result<()>;
+}
+
+#[async_trait::async_trait]
+pub trait Transaction: Send {
+    async fn commit(self: Box<Self>) -> anyhow::Result<()>;
+    async fn rollback(self: Box<Self>) -> anyhow::Result<()>;
 }

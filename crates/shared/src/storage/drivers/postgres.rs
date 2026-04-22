@@ -1,5 +1,5 @@
 use crate::storage::{
-    driver::Driver,
+    driver::{Driver, Transaction},
     model::{
         job::{Job, JobStatus},
         job_definition::JobDefinition,
@@ -102,6 +102,37 @@ impl Driver for PostgresDriver {
 
         Ok(jobs)
     }
+
+    async fn list_jobs(&self, limit: u32, offset: u32) -> anyhow::Result<Vec<Job>> {
+        let jobs = sqlx::query_as!(
+            Job,
+            r#"SELECT id, "type", payload, status AS "status: JobStatus", retries, job_definition_id, created_at FROM jobs ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
+            limit as i64,
+            offset as i64
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(jobs)
+    }
+
+    async fn get_job(&self, id: Uuid) -> anyhow::Result<Option<Job>> {
+        let job = sqlx::query_as!(
+            Job,
+            r#"SELECT id, "type", payload, status AS "status: JobStatus", retries, job_definition_id, created_at FROM jobs WHERE id = $1"#,
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(job)
+    }
+
+    async fn delete_job(&self, id: Uuid) -> anyhow::Result<()> {
+        sqlx::query!("DELETE FROM jobs WHERE id = $1", id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
     async fn create_job_definition(&self, definition: JobDefinition) -> anyhow::Result<()> {
         sqlx::query!(
             r#"INSERT INTO job_definitions (id, type, payload, schedule_type, schedule, max_retries, next_run_at, last_triggered_at, is_enabled, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#,
@@ -260,6 +291,34 @@ impl Driver for PostgresDriver {
 
         Ok(definitions)
     }
+
+    async fn get_unscheduled_job_definitions_start_txn(
+        &self,
+        limit: u32,
+    ) -> anyhow::Result<(Vec<JobDefinition>, Box<dyn Transaction>)> {
+        let txn = self.pool.begin().await?;
+
+        let definitions = sqlx::query_as!(
+            JobDefinition,
+            r#"
+        SELECT d.* FROM job_definitions d
+        WHERE d.is_enabled = true
+        AND d.next_run_at <= NOW()
+        AND NOT EXISTS (
+            SELECT 1 FROM jobs j
+            WHERE j.job_definition_id = d.id
+            AND j.status IN ('pending', 'running')
+            LIMIT $1
+        )
+        FOR UPDATE SKIP LOCKED;
+        "#,
+            limit as i64
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok((definitions, Box::new(PgTransaction(txn))))
+    }
 }
 
 impl PostgresDriver {
@@ -280,5 +339,18 @@ impl PostgresDriver {
             .run(&self.pool)
             .await
             .context("failed to run migrations.")
+    }
+}
+
+pub struct PgTransaction(sqlx::PgTransaction<'static>);
+#[async_trait::async_trait]
+impl Transaction for PgTransaction {
+    async fn commit(self: Box<Self>) -> anyhow::Result<()> {
+        self.0.commit().await?;
+        Ok(())
+    }
+    async fn rollback(self: Box<Self>) -> anyhow::Result<()> {
+        self.0.rollback().await?;
+        Ok(())
     }
 }
