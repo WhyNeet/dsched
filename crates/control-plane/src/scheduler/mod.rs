@@ -23,7 +23,7 @@ pub async fn run(
     loop {
         tokio::select! {
           _ = interval.tick() => {
-            let jobs = driver.get_unscheduled_job_definitions(100).await.unwrap();
+            let (jobs, txn) = driver.get_unscheduled_job_definitions_start_txn(100).await.unwrap();
 
             futures_util::future::join_all(jobs.into_iter().map(async |job| {
               if let Some(ref schedule) = job.schedule {
@@ -43,6 +43,8 @@ pub async fn run(
                 }).await
             }))
             .await;
+
+            txn.commit().await?;
           },
           _ = reaper_interval.tick() => {
             tracing::debug!("running reaper");
