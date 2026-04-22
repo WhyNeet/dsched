@@ -280,8 +280,10 @@ impl Driver for PostgresDriver {
             SELECT 1 FROM jobs j
             WHERE j.job_definition_id = d.id
             AND j.status IN ('pending', 'running')
-            LIMIT $1
+            LIMIT 1
         )
+        ORDER BY d.next_run_at ASC
+        LIMIT $1
         FOR UPDATE SKIP LOCKED;
         "#,
             limit as i64
@@ -308,8 +310,10 @@ impl Driver for PostgresDriver {
             SELECT 1 FROM jobs j
             WHERE j.job_definition_id = d.id
             AND j.status IN ('pending', 'running')
-            LIMIT $1
+            LIMIT 1
         )
+        ORDER BY d.next_run_at ASC
+        LIMIT $1
         FOR UPDATE SKIP LOCKED;
         "#,
             limit as i64
