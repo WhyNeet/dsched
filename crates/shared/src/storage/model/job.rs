@@ -10,6 +10,7 @@ pub struct Job {
     pub payload: Json<serde_json::Value>,
     pub status: JobStatus,
     pub retries: i32,
+    pub max_retries: i32,
     pub job_definition_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }

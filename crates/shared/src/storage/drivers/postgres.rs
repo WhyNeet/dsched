@@ -94,7 +94,32 @@ impl Driver for PostgresDriver {
               WHERE status = 'pending'
               FOR UPDATE SKIP LOCKED
               LIMIT $1
-            ) RETURNING id, "type", payload, status AS "status: JobStatus", retries, job_definition_id, created_at"#,
+            ) RETURNING id, "type", payload, status AS "status: JobStatus", retries, max_retries, job_definition_id, created_at"#,
+            limit as i64
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(jobs)
+    }
+
+    async fn update_failed_jobs(
+        &self,
+        limit: u32,
+    ) -> anyhow::Result<Vec<crate::storage::model::job::Job>> {
+        let jobs = sqlx::query_as!(
+            Job,
+            r#"
+            UPDATE jobs
+            SET status = 'pending', retries = retries + 1
+            WHERE id IN (
+                SELECT id FROM jobs
+                WHERE status = 'failed'
+                AND retries < max_retries
+                FOR UPDATE SKIP LOCKED
+                LIMIT $1
+            )
+            RETURNING id, "type", payload, status AS "status: JobStatus", retries, max_retries, job_definition_id, created_at;"#,
             limit as i64
         )
         .fetch_all(&self.pool)
@@ -106,7 +131,7 @@ impl Driver for PostgresDriver {
     async fn list_jobs(&self, limit: u32, offset: u32) -> anyhow::Result<Vec<Job>> {
         let jobs = sqlx::query_as!(
             Job,
-            r#"SELECT id, "type", payload, status AS "status: JobStatus", retries, job_definition_id, created_at FROM jobs ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
+            r#"SELECT id, "type", payload, status AS "status: JobStatus", retries, max_retries, job_definition_id, created_at FROM jobs ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
             limit as i64,
             offset as i64
         )
@@ -118,7 +143,7 @@ impl Driver for PostgresDriver {
     async fn get_job(&self, id: Uuid) -> anyhow::Result<Option<Job>> {
         let job = sqlx::query_as!(
             Job,
-            r#"SELECT id, "type", payload, status AS "status: JobStatus", retries, job_definition_id, created_at FROM jobs WHERE id = $1"#,
+            r#"SELECT id, "type", payload, status AS "status: JobStatus", retries, max_retries, job_definition_id, created_at FROM jobs WHERE id = $1"#,
             id
         )
         .fetch_optional(&self.pool)
@@ -279,7 +304,7 @@ impl Driver for PostgresDriver {
         AND NOT EXISTS (
             SELECT 1 FROM jobs j
             WHERE j.job_definition_id = d.id
-            AND j.status IN ('pending', 'running')
+            AND j.status IN ('pending', 'running', 'failed')
             LIMIT 1
         )
         ORDER BY d.next_run_at ASC
@@ -309,7 +334,7 @@ impl Driver for PostgresDriver {
         AND NOT EXISTS (
             SELECT 1 FROM jobs j
             WHERE j.job_definition_id = d.id
-            AND j.status IN ('pending', 'running')
+            AND j.status IN ('pending', 'running', 'failed')
             LIMIT 1
         )
         ORDER BY d.next_run_at ASC

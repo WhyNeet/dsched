@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT d.* FROM job_definitions d\n        WHERE d.is_enabled = true\n        AND d.next_run_at <= NOW()\n        AND NOT EXISTS (\n            SELECT 1 FROM jobs j\n            WHERE j.job_definition_id = d.id\n            AND j.status IN ('pending', 'running', 'failed')\n            LIMIT 1\n        )\n        ORDER BY d.next_run_at ASC\n        LIMIT $1\n        FOR UPDATE SKIP LOCKED;\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "payload",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 3,
+        "name": "schedule_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "schedule",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "max_retries",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "next_run_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_triggered_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "is_enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 9,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "46949a06be685bb72ba4faf7eb236e6d13f8dcf0d07f0f0e5a9ad5fc365db4d4"
+}

@@ -20,6 +20,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     worker.register("send_email".to_string(), EmailJobHandler);
+    worker.register("fail_task".to_string(), FaultyJobHandler);
 
     worker.run().await
 }
@@ -37,5 +38,16 @@ impl JobHandler for EmailJobHandler {
                 .context("missing email address in payload")?
         );
         Ok(())
+    }
+}
+
+struct FaultyJobHandler;
+
+#[async_trait::async_trait]
+impl JobHandler for FaultyJobHandler {
+    async fn run(&self, _: serde_json::Value) -> anyhow::Result<()> {
+        tracing::info!("faulty job handler");
+
+        anyhow::bail!("job failed")
     }
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT d.* FROM job_definitions d\n        WHERE d.is_enabled = true\n        AND d.next_run_at <= NOW()\n        AND NOT EXISTS (\n            SELECT 1 FROM jobs j\n            WHERE j.job_definition_id = d.id\n            AND j.status IN ('pending', 'running')\n            LIMIT $1\n        )\n        FOR UPDATE SKIP LOCKED;\n        ",
+  "query": "\n            UPDATE jobs\n            SET status = 'running'\n            WHERE id IN (\n              SELECT id FROM jobs\n              WHERE status = 'pending'\n              FOR UPDATE SKIP LOCKED\n              LIMIT $1\n            ) RETURNING id, \"type\", payload, status AS \"status: JobStatus\", retries, max_retries, job_definition_id, created_at",
   "describe": {
     "columns": [
       {
@@ -20,13 +20,13 @@
       },
       {
         "ordinal": 3,
-        "name": "schedule_type",
+        "name": "status: JobStatus",
         "type_info": "Varchar"
       },
       {
         "ordinal": 4,
-        "name": "schedule",
-        "type_info": "Varchar"
+        "name": "retries",
+        "type_info": "Int4"
       },
       {
         "ordinal": 5,
@@ -35,21 +35,11 @@
       },
       {
         "ordinal": 6,
-        "name": "next_run_at",
-        "type_info": "Timestamptz"
+        "name": "job_definition_id",
+        "type_info": "Uuid"
       },
       {
         "ordinal": 7,
-        "name": "last_triggered_at",
-        "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 8,
-        "name": "is_enabled",
-        "type_info": "Bool"
-      },
-      {
-        "ordinal": 9,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
@@ -64,13 +54,11 @@
       false,
       false,
       false,
-      true,
       false,
       false,
       true,
-      false,
       false
     ]
   },
-  "hash": "85456771fbb0aa2e38ea874c875850d4ccc7ac9c0dcf392e87bb2a7ba4a78182"
+  "hash": "66d894f0fee3642b1d1a098a458d92963dc9ed6383a7c36913bad8fd3a49e341"
 }

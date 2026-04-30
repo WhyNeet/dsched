@@ -17,6 +17,7 @@ pub async fn run(
     shutdown: CancellationToken,
 ) -> anyhow::Result<()> {
     let mut interval = tokio::time::interval(Duration::from_secs(1));
+    let mut retry_interval = tokio::time::interval(Duration::from_secs(1));
     let mut reaper_interval =
         tokio::time::interval(Duration::from_secs(config.reaper_interval_secs));
 
@@ -36,7 +37,8 @@ pub async fn run(
                     id: Uuid::new_v4(),
                     payload: job.payload,
                     job_definition_id: Some(job.id),
-                    retries: job.max_retries,
+                    retries: 0,
+                    max_retries: job.max_retries,
                     status: JobStatus::Pending,
                     r#type: job.r#type,
                     created_at: Utc::now(),
@@ -44,6 +46,9 @@ pub async fn run(
             }))
             .await;
           },
+          _ = retry_interval.tick() => {
+            _ = driver.update_failed_jobs(100).await?;
+          }
           _ = reaper_interval.tick() => {
             tracing::debug!("running reaper");
           },

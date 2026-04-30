@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, \"type\", payload, status AS \"status: JobStatus\", retries, job_definition_id, created_at FROM jobs ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+  "query": "\n            UPDATE jobs\n            SET status = 'pending', retries = retries + 1\n            WHERE id IN (\n                SELECT id FROM jobs\n                WHERE status = 'failed'\n                AND retries < max_retries\n                FOR UPDATE SKIP LOCKED\n                LIMIT $1\n            )\n            RETURNING id, \"type\", payload, status AS \"status: JobStatus\", retries, max_retries, job_definition_id, created_at;",
   "describe": {
     "columns": [
       {
@@ -30,18 +30,22 @@
       },
       {
         "ordinal": 5,
+        "name": "max_retries",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
         "name": "job_definition_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Int8",
         "Int8"
       ]
     },
@@ -51,9 +55,10 @@
       false,
       false,
       false,
+      false,
       true,
       false
     ]
   },
-  "hash": "90ab2cd3d5024e26c61b84a13d3eb7b0c8ea9421417c89886f1945aed92e0eeb"
+  "hash": "b32664fc5612e3ad6829881e025c56780abaeab444568d79f5ef2b445ac5480b"
 }
